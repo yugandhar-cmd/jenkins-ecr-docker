@@ -1,9 +1,5 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Jenkins Docker ECR</title>
-</head>
-<body>
-    <h1>Hello from Jenkins + Docker + AWS ECR!</h1>
-</body>
-</html>
+FROM nginx:latest
+
+COPY index.html /usr/share/nginx/html/index.html
+
+EXPOSE 80
