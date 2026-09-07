@@ -9,8 +9,8 @@ pipeline {
         IMAGE_NAME     = 'jenkins-ecr-push'
         IMAGE_TAG      = "${BUILD_NUMBER}"
 
-        ECR_REGISTRY = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
-        ECR_URI      = "${ECR_REGISTRY}/${ECR_REPO}"
+        ECR_REGISTRY   = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+        ECR_URI        = "${ECR_REGISTRY}/${ECR_REPO}"
     }
 
     stages {
@@ -23,11 +23,15 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                bat """
+                sh '''
                     docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
-                    docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${ECR_URI}:${IMAGE_TAG}
-                    docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${ECR_URI}:latest
-                """
+
+                    docker tag ${IMAGE_NAME}:${IMAGE_TAG} \
+                        ${ECR_URI}:${IMAGE_TAG}
+
+                    docker tag ${IMAGE_NAME}:${IMAGE_TAG} \
+                        ${ECR_URI}:latest
+                '''
             }
         }
 
@@ -37,19 +41,23 @@ pipeline {
                     [$class: 'AmazonWebServicesCredentialsBinding',
                      credentialsId: 'aws-ecr-credentials']
                 ]) {
-                    bat """
-                        aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}
-                    """
+                    sh '''
+                        aws ecr get-login-password \
+                            --region ${AWS_REGION} | \
+                        docker login \
+                            --username AWS \
+                            --password-stdin ${ECR_REGISTRY}
+                    '''
                 }
             }
         }
 
         stage('Push Image to ECR') {
             steps {
-                bat """
+                sh '''
                     docker push ${ECR_URI}:${IMAGE_TAG}
                     docker push ${ECR_URI}:latest
-                """
+                '''
             }
         }
     }
@@ -65,4 +73,3 @@ pipeline {
         }
     }
 }
-
